@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("path");
 const multer = require("multer");
 const cors = require("cors");
 const mongoose = require("mongoose");
@@ -12,6 +13,7 @@ const { S3Client, PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/cl
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "..")));
 // MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
