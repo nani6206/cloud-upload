@@ -1,40 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Cloud Upload</title>
+  <title>Welcome</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h2>Upload File</h2>
-
-<input type="file" id="fileInput" />
-<button onclick="uploadFile()">Upload</button>
-
-<p id="status"></p>
-
-<script>
-async function uploadFile() {
-  const file = document.getElementById("fileInput").files[0];
-
-  if (!file) {
-    alert("Please select a file");
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("file", file);
-
-  const res = await fetch("http://localhost:3000/upload", {
-    method: "POST",
-    body: formData
-  });
-
-  const data = await res.json();
-
-  document.getElementById("status").innerHTML =
-    "File URL: <a href='" + data.fileUrl + "' target='_blank'>" + data.fileUrl + "</a>";
-}
-</script>
+<div class="card">
+  <h2>Welcome </h2>
+  <button onclick="location.href='signup.html'">Signup</button>
+  <button onclick="location.href='login.html'">Login</button>
+</div>
 
 </body>
 </html>

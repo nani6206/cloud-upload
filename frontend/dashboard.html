@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .dashboard {
+      width: 400px;
+      margin: 50px auto;
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      margin-bottom: 20px;
+    }
+
+    .file-input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .upload-btn {
+      width: 100%;
+      background: #28a745;
+    }
+
+    .upload-btn:hover {
+      background: #218838;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      margin: 10px 0;
+      background: #f9f9f9;
+      padding: 8px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .delete-btn {
+      background: red;
+    }
+
+    .delete-btn:hover {
+      background: darkred;
+    }
+
+    .logout {
+      margin-top: 20px;
+      width: 100%;
+      background: #dc3545;
+    }
+
+    .logout:hover {
+      background: #c82333;
+    }
+  </style>
+</head>
+<body>
+
+<div class="dashboard">
+  <h2>Dashboard 📂</h2>
+
+  <!-- File Upload -->
+  <input type="file" id="file" class="file-input">
+  <button class="upload-btn" onclick="upload()">Upload</button>
+
+  <h3>Your Files</h3>
+  <ul id="files"></ul>
+
+  <!-- Logout at bottom -->
+  <button class="logout" onclick="logout()">Logout</button>
+</div>
+
+<script>
+const token = localStorage.getItem("token");
+
+if (!token) {
+  alert("Please login first");
+  location.href = "login.html";
+}
+
+// Logout
+function logout() {
+  localStorage.removeItem("token");
+  location.href = "login.html";
+}
+
+// Upload
+async function upload() {
+  const file = document.getElementById("file").files[0];
+  const form = new FormData();
+  form.append("file", file);
+
+  await fetch("http://localhost:3000/upload", {
+    method: "POST",
+    headers: { Authorization: token },
+    body: form
+  });
+
+  alert("Uploaded!");
+  getFiles();
+}
+
+// Load files
+async function getFiles() {
+  const res = await fetch("http://localhost:3000/files", {
+    headers: { Authorization: token }
+  });
+
+  const data = await res.json();
+  const ul = document.getElementById("files");
+  ul.innerHTML = "";
+
+  data.forEach(f => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <span>
+        <a href="${f.url}" target="_blank">${f.filename}</a>
+      </span>
+      <button class="delete-btn" onclick="del('${f._id}')">Delete</button>
+    `;
+    ul.appendChild(li);
+  });
+}
+
+// Delete
+async function del(id) {
+  await fetch("http://localhost:3000/delete/" + id, {
+    method: "DELETE",
+    headers: { Authorization: token }
+  });
+
+  getFiles();
+}
+
+getFiles();
+</script>
+
+</body>
+</html>
