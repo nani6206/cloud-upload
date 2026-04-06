@@ -12,9 +12,6 @@ const { S3Client, PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/cl
 const app = express();
 app.use(cors());
 app.use(express.json());
-const path = require("path");
-app.use(express.static(path.join(__dirname, "../frontend")));
-
 // MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
