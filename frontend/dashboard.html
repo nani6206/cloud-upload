@@ -104,7 +104,7 @@ async function upload() {
   const form = new FormData();
   form.append("file", file);
 
-  await fetch("http://localhost:3000/upload", {
+  await fetch("http://13.235.95.176:3000/upload", {
     method: "POST",
     headers: { Authorization: token },
     body: form
@@ -116,7 +116,7 @@ async function upload() {
 
 // Load files
 async function getFiles() {
-  const res = await fetch("http://localhost:3000/files", {
+  const res = await fetch("http://13.235.95.176:3000/files", {
     headers: { Authorization: token }
   });
 
@@ -138,7 +138,7 @@ async function getFiles() {
 
 // Delete
 async function del(id) {
-  await fetch("http://localhost:3000/delete/" + id, {
+  await fetch("http://13.235.95.176:3000/delete/" + id, {
     method: "DELETE",
     headers: { Authorization: token }
   });
