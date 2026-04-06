@@ -12,6 +12,7 @@ const { S3Client, PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/cl
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.static("../"));
 
 // MongoDB
 mongoose.connect(process.env.MONGO_URI)
