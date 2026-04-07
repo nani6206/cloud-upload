@@ -1,25 +1,111 @@
 body {
-  font-family: Arial;
-  background: #f4f4f4;
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #0f2027, #2c5364);
+  color: white;
   text-align: center;
 }
 
+/* Card UI */
 .card {
-  background: white;
-  padding: 20px;
-  margin: 100px auto;
-  width: 300px;
-  border-radius: 10px;
+  background: rgba(255,255,255,0.08);
+  padding: 30px;
+  margin: 80px auto;
+  width: 320px;
+  border-radius: 20px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
 }
 
-button {
-  padding: 10px;
-  margin: 10px;
-  background: #007bff;
-  color: white;
+h2 {
+  margin-bottom: 15px;
+}
+
+/* Inputs */
+input {
+  width: 100%;
+  padding: 12px;
+  margin-top: 12px;
+  border-radius: 10px;
   border: none;
 }
 
+/* Buttons */
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 15px;
+  border-radius: 10px;
+  border: none;
+  background: #00c6ff;
+  color: white;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
 button:hover {
-  background: #0056b3;
+  background: #0072ff;
+}
+
+/* Links */
+a {
+  color: #ddd;
+  display: block;
+  margin-top: 10px;
+}
+
+/* Dashboard */
+.dashboard {
+  width: 500px;
+  margin: 40px auto;
+  background: rgba(255,255,255,0.08);
+  padding: 25px;
+  border-radius: 20px;
+  backdrop-filter: blur(12px);
+}
+
+.file-input {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+}
+
+.upload-btn {
+  background: #28a745;
+}
+
+.upload-btn:hover {
+  background: #218838;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  margin: 10px 0;
+  background: rgba(255,255,255,0.1);
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.delete-btn {
+  background: red;
+}
+
+.delete-btn:hover {
+  background: darkred;
+}
+
+.logout {
+  margin-top: 20px;
+  background: #dc3545;
+}
+
+.logout:hover {
+  background: #c82333;
 }

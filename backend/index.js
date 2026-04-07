@@ -8,18 +8,25 @@ const jwt = require("jsonwebtoken");
 const { v4: uuidv4 } = require("uuid");
 require("dotenv").config();
 
-const { S3Client, PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
+const { 
+  S3Client, 
+  PutObjectCommand, 
+  DeleteObjectCommand 
+} = require("@aws-sdk/client-s3");
 
 const app = express();
+
+// ================= MIDDLEWARE =================
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "..")));
-// MongoDB
+
+// ================= DB =================
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch(err => console.log(err));
 
-// Schemas
+// ================= MODELS =================
 const User = mongoose.model("User", new mongoose.Schema({
   email: String,
   password: String
@@ -33,9 +40,10 @@ const File = mongoose.model("File", new mongoose.Schema({
   uploadedAt: { type: Date, default: Date.now }
 }));
 
-// Auth middleware
+// ================= AUTH =================
 const auth = (req, res, next) => {
   const token = req.headers.authorization;
+
   if (!token) return res.status(401).json({ error: "No token" });
 
   try {
@@ -47,7 +55,7 @@ const auth = (req, res, next) => {
   }
 };
 
-// AWS S3
+// ================= AWS S3 =================
 const s3 = new S3Client({
   region: process.env.REGION,
   credentials: {
@@ -56,82 +64,142 @@ const s3 = new S3Client({
   }
 });
 
-// Multer
-const upload = multer({ storage: multer.memoryStorage() });
+// ================= MULTER =================
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+});
+
+// ================= AUTH ROUTES =================
 
 // Signup
 app.post("/signup", async (req, res) => {
-  const { email, password } = req.body;
-  const hashed = await bcrypt.hash(password, 10);
-  await new User({ email, password: hashed }).save();
-  res.json({ message: "User created" });
+  try {
+    const { email, password } = req.body;
+
+    const exists = await User.findOne({ email });
+    if (exists) return res.json({ error: "User already exists" });
+
+    const hashed = await bcrypt.hash(password, 10);
+    await new User({ email, password: hashed }).save();
+
+    res.json({ message: "User created" });
+  } catch {
+    res.json({ error: "Signup failed" });
+  }
 });
 
 // Login
 app.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-  const user = await User.findOne({ email });
+  try {
+    const { email, password } = req.body;
 
-  if (!user) return res.json({ error: "User not found" });
+    const user = await User.findOne({ email });
+    if (!user) return res.json({ error: "User not found" });
 
-  const ok = await bcrypt.compare(password, user.password);
-  if (!ok) return res.json({ error: "Wrong password" });
+    const ok = await bcrypt.compare(password, user.password);
+    if (!ok) return res.json({ error: "Wrong password" });
 
-  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
-  res.json({ token });
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET
+    );
+
+    res.json({ token });
+  } catch {
+    res.json({ error: "Login failed" });
+  }
 });
+
 // Reset Password
 app.post("/reset-password", async (req, res) => {
-  const { email, newPassword } = req.body;
+  try {
+    const { email, newPassword } = req.body;
 
-  const user = await User.findOne({ email });
-  if (!user) return res.json({ error: "User not found" });
+    const user = await User.findOne({ email });
+    if (!user) return res.json({ error: "User not found" });
 
-  const hashed = await bcrypt.hash(newPassword, 10);
-  user.password = hashed;
-  await user.save();
+    const hashed = await bcrypt.hash(newPassword, 10);
+    user.password = hashed;
 
-  res.json({ message: "Password updated successfully" });
+    await user.save();
+
+    res.json({ message: "Password updated successfully" });
+  } catch {
+    res.json({ error: "Reset failed" });
+  }
 });
-// Upload
+
+// ================= FILE UPLOAD =================
+
+// Upload (🔥 FIXED FOR PREVIEW)
 app.post("/upload", auth, upload.single("file"), async (req, res) => {
-  const key = uuidv4() + "-" + req.file.originalname;
+  try {
+    const key = uuidv4() + "-" + req.file.originalname;
 
-  await s3.send(new PutObjectCommand({
-    Bucket: process.env.BUCKET_NAME,
-    Key: key,
-    Body: req.file.buffer
-  }));
+    await s3.send(new PutObjectCommand({
+      Bucket: process.env.BUCKET_NAME,
+      Key: key,
+      Body: req.file.buffer,
 
-  const url = `https://${process.env.BUCKET_NAME}.s3.${process.env.REGION}.amazonaws.com/${key}`;
+      // 🔥 VERY IMPORTANT
+      ContentType: req.file.mimetype,
+      ContentDisposition: "inline"
+    }));
 
-  await new File({
-    filename: req.file.originalname,
-    url,
-    key,
-    userId: req.userId
-  }).save();
+    const url = `https://${process.env.BUCKET_NAME}.s3.${process.env.REGION}.amazonaws.com/${key}`;
 
-  res.json({ url });
+    await new File({
+      filename: req.file.originalname,
+      url,
+      key,
+      userId: req.userId
+    }).save();
+
+    res.json({ url });
+  } catch (err) {
+    console.log(err);
+    res.json({ error: "Upload failed" });
+  }
 });
 
-// Get files
+// Get user files
 app.get("/files", auth, async (req, res) => {
-  const files = await File.find({ userId: req.userId });
-  res.json(files);
+  try {
+    const files = await File.find({ userId: req.userId }).sort({ uploadedAt: -1 });
+    res.json(files);
+  } catch {
+    res.json({ error: "Failed to fetch files" });
+  }
 });
 
-// Delete
+// Delete file
 app.delete("/delete/:id", auth, async (req, res) => {
-  const file = await File.findById(req.params.id);
+  try {
+    const file = await File.findById(req.params.id);
 
-  await s3.send(new DeleteObjectCommand({
-    Bucket: process.env.BUCKET_NAME,
-    Key: file.key
-  }));
+    if (!file) return res.json({ error: "File not found" });
 
-  await File.findByIdAndDelete(req.params.id);
-  res.json({ message: "Deleted" });
+    // 🔥 SECURITY: check ownership
+    if (file.userId !== req.userId) {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    await s3.send(new DeleteObjectCommand({
+      Bucket: process.env.BUCKET_NAME,
+      Key: file.key
+    }));
+
+    await File.findByIdAndDelete(req.params.id);
+
+    res.json({ message: "Deleted successfully" });
+  } catch (err) {
+    console.log(err);
+    res.json({ error: "Delete failed" });
+  }
 });
 
-app.listen(3000, () => console.log("Server running"));
+// ================= START SERVER =================
+app.listen(3000, () => {
+  console.log("🚀 Server running on port 3000");
+});

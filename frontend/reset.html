@@ -8,14 +8,17 @@
 
 <div class="card">
   <h2>Reset Password</h2>
-  <input id="email" placeholder="Email"><br>
-  <input id="newPassword" type="password" placeholder="New Password"><br>
+  <p style="font-size:12px;color:#bbb;">Recover your account</p>
+
+  <input id="email" placeholder="Email">
+  <input id="newPassword" type="password" placeholder="New Password">
+
   <button onclick="reset()">Reset</button>
 </div>
 
 <script>
 async function reset(){
-  const res = await fetch("http://13.235.95.176:3000/reset-password",{
+  const res = await fetch("http://localhost:3000/reset-password",{
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({
